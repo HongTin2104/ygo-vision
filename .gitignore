@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Dataset & Data
+data/
+*.csv
+*.json
+*.db
+*.sqlite
+
+# Captured images
+captured_cards/
+*.jpg
+*.png
+*.jpeg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies marker
+.deps_installed
+
+# Logs
+*.log
+
+# Flask
+instance/
+.webassets-cache
+
+# Distribution
+dist/
+build/
+*.egg-info/
