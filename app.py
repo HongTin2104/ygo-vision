@@ -2,7 +2,7 @@
 Flask web server for Yu-Gi-Oh! Card Recognition
 Provides REST API and web interface
 """
-from flask import Flask, render_template, Response, jsonify, request
+from flask import Flask, render_template, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
 import cv2
 import numpy as np
@@ -355,6 +355,34 @@ def stats():
         'database_loaded': database.cards_df is not None,
         'columns': list(database.cards_df.columns) if database.cards_df is not None else []
     })
+
+@app.route('/random_card_images', methods=['GET'])
+def random_card_images():
+    """Get random card images for background animation"""
+    import os
+    import random
+    
+    card_images_dir = 'data/card_images'
+    count = int(request.args.get('count', 20))
+    
+    # Get all card images
+    all_images = [f for f in os.listdir(card_images_dir) if f.endswith('.jpg')]
+    
+    # Select random images
+    selected_images = random.sample(all_images, min(count, len(all_images)))
+    
+    # Return image IDs (without extension)
+    image_ids = [os.path.splitext(img)[0] for img in selected_images]
+    
+    return jsonify({
+        'images': image_ids
+    })
+
+@app.route('/card_image/<image_id>')
+def card_image(image_id):
+    """Serve card image by ID"""
+    import os
+    return send_from_directory('data/card_images', f'{image_id}.jpg')
 
 if __name__ == '__main__':
     print("Starting Yu-Gi-Oh! Card Recognition Server...")
