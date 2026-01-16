@@ -1,10 +1,10 @@
 :root {
-    --primary-color: #8b5cf6;
-    --secondary-color: #ec4899;
-    --accent-color: #f59e0b;
-    --dark-bg: #0f172a;
-    --card-bg: #1e293b;
-    --card-hover: #334155;
+    --primary-color: #d4a574;
+    --secondary-color: #c17d3a;
+    --accent-color: #f5a623;
+    --dark-bg: #1a1410;
+    --card-bg: #2d1f14;
+    --card-hover: #3d2a1a;
     --text-primary: #f1f5f9;
     --text-secondary: #94a3b8;
     --success: #10b981;
@@ -13,9 +13,9 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
     --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.3);
-    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    --gradient-accent: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --gradient-primary: linear-gradient(135deg, #f5a623 0%, #d4a574 50%, #c17d3a 100%);
+    --gradient-secondary: linear-gradient(135deg, #ff9a3c 0%, #ff6f3c 100%);
+    --gradient-accent: linear-gradient(135deg, #ffd700 0%, #ffb347 100%);
 }
 
 * {
@@ -40,9 +40,10 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
-    background: linear-gradient(45deg, #0f172a, #1e293b, #0f172a);
+    background: linear-gradient(45deg, #1a1410, #2d1f14, #1a1410);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
+    overflow: hidden;
 }
 
 @keyframes gradientShift {
@@ -57,6 +58,161 @@ body {
     100% {
         background-position: 0% 50%;
     }
+}
+
+/* Falling Yu-Gi-Oh Cards */
+.falling-card {
+    position: absolute;
+    width: 60px;
+    height: 87px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(212, 165, 116, 0.4);
+    opacity: 0.7;
+    animation: fall linear infinite;
+    pointer-events: none;
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.6;
+    }
+
+    90% {
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: translateY(calc(100vh + 100px)) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Individual card animations with different delays and positions */
+.falling-card:nth-child(1) {
+    left: 5%;
+    animation-duration: 15s;
+    animation-delay: 0s;
+}
+
+.falling-card:nth-child(2) {
+    left: 12%;
+    animation-duration: 18s;
+    animation-delay: 2s;
+}
+
+.falling-card:nth-child(3) {
+    left: 20%;
+    animation-duration: 12s;
+    animation-delay: 4s;
+}
+
+.falling-card:nth-child(4) {
+    left: 28%;
+    animation-duration: 16s;
+    animation-delay: 1s;
+}
+
+.falling-card:nth-child(5) {
+    left: 35%;
+    animation-duration: 14s;
+    animation-delay: 3s;
+}
+
+.falling-card:nth-child(6) {
+    left: 42%;
+    animation-duration: 17s;
+    animation-delay: 5s;
+}
+
+.falling-card:nth-child(7) {
+    left: 50%;
+    animation-duration: 13s;
+    animation-delay: 0.5s;
+}
+
+.falling-card:nth-child(8) {
+    left: 58%;
+    animation-duration: 19s;
+    animation-delay: 2.5s;
+}
+
+.falling-card:nth-child(9) {
+    left: 65%;
+    animation-duration: 15s;
+    animation-delay: 4.5s;
+}
+
+.falling-card:nth-child(10) {
+    left: 72%;
+    animation-duration: 16s;
+    animation-delay: 1.5s;
+}
+
+.falling-card:nth-child(11) {
+    left: 80%;
+    animation-duration: 14s;
+    animation-delay: 3.5s;
+}
+
+.falling-card:nth-child(12) {
+    left: 88%;
+    animation-duration: 18s;
+    animation-delay: 5.5s;
+}
+
+.falling-card:nth-child(13) {
+    left: 8%;
+    animation-duration: 17s;
+    animation-delay: 6s;
+}
+
+.falling-card:nth-child(14) {
+    left: 16%;
+    animation-duration: 13s;
+    animation-delay: 7s;
+}
+
+.falling-card:nth-child(15) {
+    left: 24%;
+    animation-duration: 15s;
+    animation-delay: 8s;
+}
+
+.falling-card:nth-child(16) {
+    left: 32%;
+    animation-duration: 19s;
+    animation-delay: 6.5s;
+}
+
+.falling-card:nth-child(17) {
+    left: 40%;
+    animation-duration: 14s;
+    animation-delay: 7.5s;
+}
+
+.falling-card:nth-child(18) {
+    left: 48%;
+    animation-duration: 16s;
+    animation-delay: 8.5s;
+}
+
+.falling-card:nth-child(19) {
+    left: 56%;
+    animation-duration: 18s;
+    animation-delay: 9s;
+}
+
+.falling-card:nth-child(20) {
+    left: 64%;
+    animation-duration: 15s;
+    animation-delay: 9.5s;
 }
 
 /* Floating particles */
@@ -92,14 +248,14 @@ body {
 
 /* Header */
 header {
-    background: rgba(30, 41, 59, 0.8);
+    background: rgba(45, 31, 20, 0.8);
     backdrop-filter: blur(10px);
     padding: 1.5rem 2rem;
     box-shadow: var(--shadow-md);
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+    border-bottom: 2px solid rgba(212, 165, 116, 0.3);
 }
 
 .header-content {
@@ -117,11 +273,17 @@ header {
 }
 
 .logo-icon {
-    font-size: 2.5rem;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    width: 50px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(212, 165, 116, 0.4);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.logo-icon:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(212, 165, 116, 0.6);
 }
 
 .logo h1 {
@@ -170,19 +332,19 @@ header {
 
 /* Card styles */
 .card {
-    background: rgba(30, 41, 59, 0.6);
+    background: rgba(45, 31, 20, 0.6);
     backdrop-filter: blur(10px);
     border-radius: var(--border-radius);
     padding: 2rem;
     box-shadow: var(--shadow-md);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(212, 165, 116, 0.2);
     transition: all 0.3s ease;
 }
 
 .card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
-    border-color: rgba(139, 92, 246, 0.5);
+    border-color: rgba(212, 165, 116, 0.5);
 }
 
 .card-header {
@@ -302,12 +464,12 @@ header {
 .btn-primary {
     background: var(--gradient-primary);
     color: white;
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 4px 15px rgba(212, 165, 116, 0.4);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+    box-shadow: 0 6px 20px rgba(212, 165, 116, 0.6);
 }
 
 .btn-secondary {
@@ -348,8 +510,8 @@ header {
 .search-input {
     width: 100%;
     padding: 1rem 1rem 1rem 3rem;
-    background: rgba(15, 23, 42, 0.6);
-    border: 2px solid rgba(139, 92, 246, 0.3);
+    background: rgba(26, 20, 16, 0.6);
+    border: 2px solid rgba(212, 165, 116, 0.3);
     border-radius: 0.75rem;
     color: var(--text-primary);
     font-size: 1rem;
@@ -359,7 +521,7 @@ header {
 .search-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 4px rgba(212, 165, 116, 0.1);
 }
 
 .search-icon {
@@ -373,7 +535,7 @@ header {
 
 /* Card info display */
 .card-info {
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(26, 20, 16, 0.6);
     border-radius: var(--border-radius);
     padding: 1.5rem;
     margin-top: 1rem;
@@ -404,7 +566,7 @@ header {
     display: flex;
     justify-content: space-between;
     padding: 0.75rem;
-    background: rgba(30, 41, 59, 0.5);
+    background: rgba(45, 31, 20, 0.5);
     border-radius: 0.5rem;
 }
 
@@ -420,7 +582,7 @@ header {
 
 /* Loading spinner */
 .spinner {
-    border: 3px solid rgba(139, 92, 246, 0.3);
+    border: 3px solid rgba(212, 165, 116, 0.3);
     border-top: 3px solid var(--primary-color);
     border-radius: 50%;
     width: 40px;
@@ -475,7 +637,7 @@ header {
 }
 
 .alert-info {
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(212, 165, 116, 0.2);
     border: 1px solid var(--primary-color);
     color: var(--primary-color);
 }
@@ -533,7 +695,7 @@ header {
     position: absolute;
     width: 60px;
     height: 60px;
-    border: 4px solid rgba(139, 92, 246, 0.8);
+    border: 4px solid rgba(212, 165, 116, 0.8);
 }
 
 .frame-tl {
@@ -574,7 +736,7 @@ header {
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
-    background: rgba(139, 92, 246, 0.9);
+    background: rgba(212, 165, 116, 0.9);
     padding: 0.75rem 1.5rem;
     border-radius: 2rem;
     backdrop-filter: blur(10px);
@@ -610,7 +772,7 @@ header {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
-    background: rgba(15, 23, 42, 0.8);
+    background: rgba(26, 20, 16, 0.8);
     border-radius: 2rem;
     font-size: 0.875rem;
     font-weight: 600;
@@ -636,15 +798,15 @@ header {
 .info-box {
     margin-top: 1.5rem;
     padding: 1rem;
-    background: rgba(79, 172, 254, 0.1);
+    background: rgba(245, 166, 35, 0.1);
     border-radius: 0.75rem;
-    border-left: 4px solid #4facfe;
+    border-left: 4px solid #f5a623;
 }
 
 .info-box h3 {
     font-size: 1rem;
     margin-bottom: 0.5rem;
-    color: #4facfe;
+    color: #f5a623;
 }
 
 .info-box ul {
@@ -660,8 +822,8 @@ header {
 
 /* Detected Card Info */
 .detection-card {
-    border: 2px solid rgba(139, 92, 246, 0.3);
-    background: rgba(30, 41, 59, 0.8);
+    border: 2px solid rgba(212, 165, 116, 0.3);
+    background: rgba(45, 31, 20, 0.8);
 }
 
 .detection-card.active {
@@ -680,9 +842,15 @@ header {
 }
 
 .no-detection-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.3;
+    width: 120px;
+    height: 174px;
+    margin: 0 auto 1rem;
+    background-image: url('/static/images/Back-EN.webp');
+    background-size: cover;
+    background-position: center;
+    border-radius: 8px;
+    opacity: 0.5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .no-detection p {
@@ -724,7 +892,7 @@ header {
 .card-type {
     display: inline-block;
     padding: 0.25rem 0.75rem;
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(212, 165, 116, 0.2);
     border: 1px solid var(--primary-color);
     border-radius: 1rem;
     font-size: 0.75rem;
@@ -756,7 +924,7 @@ header {
 
 .confidence-progress {
     height: 8px;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(26, 20, 16, 0.6);
     border-radius: 1rem;
     overflow: hidden;
 }
@@ -772,7 +940,7 @@ header {
 .card-description {
     margin-top: 1rem;
     padding: 1rem;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(26, 20, 16, 0.4);
     border-radius: 0.5rem;
     font-size: 0.875rem;
     line-height: 1.6;
@@ -812,11 +980,11 @@ header {
 }
 
 .stat-box-primary {
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(212, 165, 116, 0.1);
 }
 
 .stat-box-secondary {
-    background: rgba(236, 72, 153, 0.1);
+    background: rgba(255, 154, 60, 0.1);
 }
 
 .stat-number {
