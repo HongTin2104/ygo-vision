@@ -1,0 +1,14 @@
+opencv-python
+numpy
+pandas
+pillow
+kagglehub
+torch
+torchvision
+ultralytics
+flask
+flask-cors
+tqdm
+imagehash
+Pillow
+torch\ntorchvision\nscikit-learn
