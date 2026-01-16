@@ -137,26 +137,44 @@ class CardDatabase:
     
     def load_database(self):
         """Load card database from CSV/JSON files"""
-        # Try to find any CSV or JSON file in data directory
         import glob
         
-        csv_files = glob.glob(os.path.join(self.data_dir, '*.csv'))
-        json_files = glob.glob(os.path.join(self.data_dir, '*.json'))
-        
-        all_files = csv_files + json_files
-        
-        if all_files:
+        # First, try to load cards.csv specifically
+        cards_csv_path = os.path.join(self.data_dir, 'cards.csv')
+        if os.path.exists(cards_csv_path):
+            filepath = cards_csv_path
+        else:
+            # Fall back to finding any CSV or JSON file
+            csv_files = glob.glob(os.path.join(self.data_dir, '*.csv'))
+            json_files = glob.glob(os.path.join(self.data_dir, '*.json'))
+            all_files = csv_files + json_files
+            
+            if not all_files:
+                print(f"Warning: No card database found in {self.data_dir}")
+                print(f"Looking for CSV or JSON files")
+                return
+            
             filepath = all_files[0]  # Use first file found
+        
+        # Load the file
+        try:
             if filepath.endswith('.csv'):
                 self.cards_df = pd.read_csv(filepath)
             elif filepath.endswith('.json'):
                 self.cards_df = pd.read_json(filepath)
+            
             print(f"Loaded database from {filepath}")
             print(f"Total cards: {len(self.cards_df)}")
             print(f"Columns: {list(self.cards_df.columns)}")
-        else:
-            print(f"Warning: No card database found in {self.data_dir}")
-            print(f"Looking for CSV or JSON files")
+            
+            # Verify 'id' column exists
+            if 'id' not in self.cards_df.columns:
+                print(f"WARNING: 'id' column not found in database!")
+                print(f"Available columns: {list(self.cards_df.columns)}")
+        except Exception as e:
+            print(f"Error loading database: {e}")
+            import traceback
+            traceback.print_exc()
     
     def search_by_name(self, name: str) -> Optional[Dict]:
         """Search card by name"""
