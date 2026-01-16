@@ -41,6 +41,9 @@ class CardRecognitionApp {
         // Create animated background
         this.createParticles();
 
+        // Load falling card images
+        this.loadFallingCardImages();
+
         // Start real-time card detection
         this.startRealtimeDetection();
 
@@ -206,7 +209,7 @@ class CardRecognitionApp {
         this.detectionCard.classList.remove('active');
         this.detectedCardInfo.innerHTML = `
             <div class="no-detection">
-                <div class="no-detection-icon">🎴</div>
+                <div class="no-detection-icon"></div>
                 <p>No card detected</p>
                 <small>Place a Yu-Gi-Oh! card in the frame</small>
             </div>
@@ -230,6 +233,32 @@ class CardRecognitionApp {
             particle.style.animationDelay = Math.random() * 20 + 's';
             particle.style.animationDuration = (15 + Math.random() * 10) + 's';
             body.appendChild(particle);
+        }
+    }
+
+    async loadFallingCardImages() {
+        try {
+            // Fetch random card images from API
+            const response = await fetch('/random_card_images?count=20');
+            const data = await response.json();
+
+            if (data.images && data.images.length > 0) {
+                // Get all falling card elements
+                const fallingCards = document.querySelectorAll('.falling-card');
+
+                // Apply random card images to each falling card
+                fallingCards.forEach((card, index) => {
+                    if (index < data.images.length) {
+                        const imageId = data.images[index];
+                        card.style.backgroundImage = `url('/card_image/${imageId}')`;
+                    }
+                });
+
+                console.log('✅ Loaded', data.images.length, 'falling card images');
+            }
+        } catch (error) {
+            console.error('Failed to load falling card images:', error);
+            // Fallback to default background if API fails
         }
     }
 

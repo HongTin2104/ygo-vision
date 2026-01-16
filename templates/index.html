@@ -7,6 +7,9 @@
     <meta name="description" content="Yu-Gi-Oh! Card Recognition System - Nhận diện thẻ bài Yu-Gi-Oh! qua camera">
     <title>Yu-Gi-Oh! Card Recognition System</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,13 +21,34 @@
 
 <body>
     <!-- Animated Background -->
-    <div class="animated-bg"></div>
+    <div class="animated-bg">
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+    </div>
 
     <!-- Header -->
     <header>
         <div class="header-content">
             <div class="logo">
-                <span class="logo-icon">🎴</span>
+                <img src="{{ url_for('static', filename='images/Back-EN.webp') }}" alt="Yu-Gi-Oh!" class="logo-icon">
                 <h1>Yu-Gi-Oh! Card Vision</h1>
             </div>
             <div class="stats" id="stats">
@@ -89,16 +113,6 @@
                     </button>
                 </div>
 
-                <div class="info-box">
-                    <h3>💡 Hướng dẫn sử dụng</h3>
-                    <ul>
-                        <li>✓ Đặt thẻ bài vào khung hình chữ nhật</li>
-                        <li>✓ Giữ thẻ ổn định trong vài giây</li>
-                        <li>✓ Hệ thống sẽ tự động nhận diện</li>
-                        <li>✓ Thông tin thẻ hiển thị bên phải</li>
-                    </ul>
-                </div>
-
                 <!-- Search Card (moved here) -->
                 <div class="card" style="margin-top: 1.5rem;">
                     <div class="card-header">
@@ -150,7 +164,7 @@
 
                     <div id="detectedCardInfo" class="detected-info">
                         <div class="no-detection">
-                            <div class="no-detection-icon">🎴</div>
+                            <div class="no-detection-icon"></div>
                             <p>No card detected</p>
                             <small>Place a Yu-Gi-Oh! card in the frame</small>
                         </div>
