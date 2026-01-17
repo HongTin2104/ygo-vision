@@ -157,6 +157,24 @@ class CNNCardRecognizer:
             return results[0]
         
         return None, 0.0
+    
+    def cleanup(self):
+        """Clean up model resources"""
+        try:
+            if hasattr(self, 'model') and self.model is not None:
+                # Move model to CPU and delete
+                self.model.cpu()
+                del self.model
+                self.model = None
+                
+                # Clear CUDA cache if available
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                
+                print("✓ CNN model cleaned up")
+        except Exception as e:
+            print(f"✗ Error cleaning up CNN model: {e}")
+
 
 # Test function
 def test_recognizer():
