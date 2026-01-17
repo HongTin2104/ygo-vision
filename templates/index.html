@@ -81,8 +81,7 @@
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">
-                                    <span class="card-icon">📹</span>
-                                    Camera Feed
+                                    Camera
                                 </h2>
                                 <div class="detection-status" id="detectionStatus">
                                     <span class="status-indicator"></span>
@@ -119,6 +118,12 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Price Info Card (Separate Group) -->
+                        <div class="card price-card" id="priceContainer"
+                            style="display: none; margin-top: 1.5rem; animation: slideIn 0.3s ease-out;">
+                            <!-- Content injected by JS -->
+                        </div>
                     </div>
 
                     <!-- Search Tab -->
@@ -126,13 +131,11 @@
                         <div class="card">
                             <div class="card-header">
                                 <h2 class="card-title">
-                                    <span class="card-icon">🔍</span>
                                     Search Card
                                 </h2>
                             </div>
 
                             <div class="search-container">
-                                <span class="search-icon">🔎</span>
                                 <input type="text" id="searchInput" class="search-input"
                                     placeholder="Enter card name..." autocomplete="off">
                             </div>
@@ -146,13 +149,11 @@
                                 style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(212, 165, 116, 0.2);">
                                 <h3
                                     style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
-                                    <span>ℹ️</span>
                                     <span>Card Details</span>
                                 </h3>
 
                                 <div id="cardInfo">
                                     <div class="no-info">
-                                        <div class="no-info-icon">📋</div>
                                         <p>Search for a card to view details</p>
                                     </div>
                                 </div>
@@ -181,6 +182,8 @@
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </div>
 

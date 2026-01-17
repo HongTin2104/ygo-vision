@@ -13,6 +13,7 @@ class CardRecognitionApp {
         this.detectionStatus = document.getElementById('detectionStatus');
         this.alertContainer = document.getElementById('alertContainer');
         this.cornerCardImage = document.getElementById('cornerCardImage');
+        this.priceContainer = document.getElementById('priceContainer');
 
         this.cardsScanned = 0;
         this.searchCount = 0;
@@ -99,7 +100,7 @@ class CardRecognitionApp {
                     return;
                 }
 
-                console.log(`📥 Detected: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
+                console.log(`Detected: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
 
                 // PERSISTENT MODE UPDATE LOGIC:
                 const shouldUpdate =
@@ -122,7 +123,7 @@ class CardRecognitionApp {
                         this.updateSessionStats();
                     }
                 } else {
-                    console.log(`⏸️  KEEP: ${this.currentCard} (${(this.currentConfidence * 100).toFixed(1)}%) - New: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
+                    console.log(`KEEP: ${this.currentCard} (${(this.currentConfidence * 100).toFixed(1)}%) - New: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
                     this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
                 }
             } else {
@@ -168,7 +169,7 @@ class CardRecognitionApp {
     }
 
     displayDetectedCard(cardInfo) {
-        console.log('🎨 Displaying card:', cardInfo.name);
+        console.log('Displaying card:', cardInfo.name);
 
         this.detectionCard.classList.add('active');
 
@@ -244,20 +245,98 @@ class CardRecognitionApp {
             </div>
         `;
 
+        // Render Price Info into Separate Container
+        if (cardInfo.prices) {
+            this.priceContainer.innerHTML = `
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <span class="card-icon" style="color: #4caf50;">$</span>
+                        Market Prices
+                    </h2>
+                </div>
+                <div style="padding: 1.5rem;">
+                    ${this.formatPriceDetails(cardInfo.prices)}
+                </div>
+            `;
+            this.priceContainer.style.display = 'block';
+        } else {
+            this.priceContainer.style.display = 'none';
+        }
+
         console.log('Card displayed successfully');
+    }
+
+    formatPriceDetails(priceData) {
+        if (!priceData) return '';
+
+        // Handle backward compatibility or different structure
+        const market = priceData.market_prices || priceData;
+        const sets = priceData.sets || [];
+
+        // Sort sets by price (High to Low)
+        const sortedSets = [...sets].sort((a, b) => parseFloat(b.set_price) - parseFloat(a.set_price));
+
+        let setsHtml = '';
+        if (sortedSets.length > 0) {
+            setsHtml = `
+                <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+                        <span>Versions & Printings</span>
+                        <span style="font-size: 0.7rem; opacity: 0.7;">${sortedSets.length} found</span>
+                    </div>
+                    <div style="max-height: 200px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
+                        ${sortedSets.map(set => {
+                const price = parseFloat(set.set_price);
+                const priceDisplay = (price > 0) ? `$${set.set_price}` : '<span style="opacity: 0.5; font-size: 0.7rem;">N/A</span>';
+
+                return `
+                            <div style="display: flex; justify-content: space-between; align-items: start; padding: 0.5rem 0; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                <div style="flex: 1; margin-right: 0.5rem;">
+                                    <div style="color: #fff; font-weight: 500; font-family: monospace;">${set.set_code}</div>
+                                    <div style="color: var(--text-secondary); font-size: 0.7rem; line-height: 1.2;">
+                                        ${set.set_rarity} <span style="opacity: 0.5;">(${set.set_rarity_code})</span>
+                                        <br>
+                                        <span style="opacity: 0.7;">${set.set_name}</span>
+                                    </div>
+                                </div>
+                                <div style="color: #4caf50; font-weight: bold; white-space: nowrap;">${priceDisplay}</div>
+                            </div>
+                        `;
+            }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Average Market Price</div>
+                <div style="display: flex; justify-content: space-between; gap: 0.5rem;">
+                    <div style="flex: 1; padding: 0.5rem; background: rgba(0, 200, 83, 0.1); border: 1px solid rgba(0, 200, 83, 0.3); border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">TCGPlayer</div>
+                        <div style="font-weight: bold; color: #4caf50;">$${market.tcgplayer_price || 'N/A'}</div>
+                    </div>
+                    <div style="flex: 1; padding: 0.5rem; background: rgba(33, 150, 243, 0.1); border: 1px solid rgba(33, 150, 243, 0.3); border-radius: 0.5rem; text-align: center;">
+                        <div style="font-size: 0.7rem; color: var(--text-secondary);">CardMarket</div>
+                        <div style="font-weight: bold; color: #2196f3;">€${market.cardmarket_price || 'N/A'}</div>
+                    </div>
+                </div>
+                ${setsHtml}
+            </div>
+        `;
     }
 
     updateCornerCardImage(imageUrl) {
         if (this.cornerCardImage && imageUrl) {
             this.cornerCardImage.src = imageUrl;
-            console.log('🖼️ Updated corner card image:', imageUrl);
+            console.log('Updated corner card image:', imageUrl);
         }
     }
 
     resetCornerCardImage() {
         if (this.cornerCardImage) {
             this.cornerCardImage.src = 'static/images/Back-EN.webp';
-            console.log('🔄 Reset corner card to back image');
+            console.log('Reset corner card to back image');
         }
     }
 
@@ -275,6 +354,7 @@ class CardRecognitionApp {
         // Reset corner card image to back
         this.resetCornerCardImage();
         this.currentCardImageUrl = null;
+        this.priceContainer.style.display = 'none';
     }
 
     updateSessionStats() {
@@ -392,6 +472,7 @@ class CardRecognitionApp {
                     ${cardData.name || 'Unknown Card'}
                 </h3>
                 ${detailsHtml}
+                ${this.formatPriceDetails(cardData.prices)}
             </div>
         `;
     }
@@ -407,11 +488,7 @@ class CardRecognitionApp {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
 
-        const icon = type === 'success' ? '✓' :
-            type === 'error' ? '✗' : 'ℹ';
-
         alert.innerHTML = `
-            <span style="font-size: 1.2rem;">${icon}</span>
             <span>${message}</span>
         `;
 
