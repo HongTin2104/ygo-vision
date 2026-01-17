@@ -10,6 +10,11 @@ Real-time Yu-Gi-Oh! card recognition using deep learning and computer vision.
 
 **Repository**: [github.com/HongTin2104/ygo-vision](https://github.com/HongTin2104/ygo-vision)
 
+## Demo
+
+![Yu-Gi-Oh! Vision Demo](demo/demo.gif)
+
+
 ## Features
 
 - **Real-time Detection**: Detect cards from webcam feed
