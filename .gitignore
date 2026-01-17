@@ -47,3 +47,6 @@ instance/
 dist/
 build/
 *.egg-info/
+
+# Apache
+apache-config/

@@ -4,6 +4,7 @@ Provides REST API and web interface
 """
 from flask import Flask, render_template, Response, jsonify, request, send_from_directory
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 import cv2
 import numpy as np
 import base64
@@ -14,9 +15,18 @@ from datetime import datetime
 import atexit
 import gc
 import time
+import os
 
 app = Flask(__name__)
 CORS(app)
+
+# Configure for Apache proxy with /ygo-vision base path
+# This middleware helps Flask understand it's behind a proxy
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Set APPLICATION_ROOT if running behind proxy
+# This can be overridden by environment variable
+app.config['APPLICATION_ROOT'] = os.environ.get('FLASK_APPLICATION_ROOT', '/')
 
 # Initialize components
 detector = CardDetector()
@@ -106,7 +116,8 @@ def generate_frames():
     required_stable_frames = 10  # Card must be stable for 10 frames
     
     while True:
-        success, frame = cam.read()
+        with get_camera_lock():
+            success, frame = cam.read()
         if not success:
             break
         
@@ -232,7 +243,8 @@ def current_card():
         if cam is None or not cam.isOpened():
             return jsonify({'detected': False, 'error': 'Camera not available'}), 500
         
-        success, frame = cam.read()
+        with get_camera_lock():
+            success, frame = cam.read()
         
         if not success or frame is None:
             return jsonify({'detected': False, 'error': 'Failed to capture frame'}), 500
