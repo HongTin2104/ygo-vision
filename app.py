@@ -16,6 +16,9 @@ import atexit
 import gc
 import time
 import os
+import urllib.request
+import urllib.parse
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -40,9 +43,9 @@ try:
         model_path='models/card_recognition_subset_v2.pth',
         data_dir='data/augmented_subset_new'
     )
-    print("✓ CNN Card Recognizer ready!")
+    print("CNN Card Recognizer ready!")
 except Exception as e:
-    print(f"✗ CNN Card Recognizer failed to initialize: {e}")
+    print(f"CNN Card Recognizer failed to initialize: {e}")
     cnn_recognizer = None
 
 # Global camera and lock
@@ -60,16 +63,16 @@ def get_camera_lock():
 def cleanup_resources():
     """Clean up camera and other resources"""
     global camera, cnn_recognizer, camera_lock
-    print("\n🧹 Cleaning up resources...")
+    print("\nCleaning up resources...")
     
     lock = get_camera_lock()
     with lock:
         if camera is not None:
             try:
                 camera.release()
-                print("✓ Camera released")
+                print("Camera released")
             except Exception as e:
-                print(f"✗ Error releasing camera: {e}")
+                print(f"Error releasing camera: {e}")
             finally:
                 camera = None
     
@@ -82,8 +85,8 @@ def cleanup_resources():
     
     # Force garbage collection to clean up any lingering objects
     gc.collect()
-    print("✓ Garbage collection completed")
-    print("👋 Shutdown complete!")
+    print("Garbage collection completed")
+    print("Shutdown complete!")
 
 
 # Register cleanup handler
@@ -154,10 +157,10 @@ def generate_frames():
                             if card_info:
                                 card_type = card_info.get('type', '')
                             
-                            print(f"✓ Recognized: {card_name} ({confidence:.2%})")
+                            print(f"Recognized: {card_name} ({confidence:.2%})")
                         except Exception as e:
                             import traceback
-                            print(f"✗ CNN Recognizer error: {e}")
+                            print(f"CNN Recognizer error: {e}")
                             traceback.print_exc()
                     
                     # Draw semi-transparent overlay
@@ -227,6 +230,56 @@ def video_feed():
 last_card_result = None
 last_card_time = 0
 CARD_CACHE_DURATION = 0.1  # Cache for 100ms
+
+# Price cache to avoid API rate limits
+price_cache = {}
+PRICE_CACHE_DURATION = 3600  # Cache prices for 1 hour
+
+def get_card_price(card_name):
+    """Fetch card price from YGOProDeck API"""
+    global price_cache
+    
+    current_time = time.time()
+    
+    # Check cache first
+    if card_name in price_cache:
+        cached_data, timestamp = price_cache[card_name]
+        if current_time - timestamp < PRICE_CACHE_DURATION:
+            return cached_data
+    
+    try:
+        # URL encode the card name
+        encoded_name = urllib.parse.quote(card_name)
+        url = f"https://db.ygoprodeck.com/api/v7/cardinfo.php?name={encoded_name}"
+        
+        # Create request with user agent (good practice)
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0'}
+        )
+        
+        with urllib.request.urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            
+            if data and 'data' in data and len(data['data']) > 0:
+                card_data = data['data'][0]
+                if 'card_prices' in card_data:
+                    prices = card_data['card_prices'][0]
+                    sets = card_data.get('card_sets', [])
+                    
+                    price_data = {
+                        'market_prices': prices,
+                        'sets': sets
+                    }
+                    
+                    # Cache the result
+                    price_cache[card_name] = (price_data, current_time)
+                    return price_data
+                    
+    except Exception as e:
+        print(f"Error fetching price for {card_name}: {e}")
+        
+    return None
 
 @app.route('/current_card', methods=['GET'])
 def current_card():
@@ -301,8 +354,16 @@ def current_card():
                     
                     card_info = cleaned_info
                     card_info['confidence'] = confidence
+                    
+                    # Fetch price info
+                    price_info = get_card_price(card_info['name'])
+                    if price_info:
+                        card_info['prices'] = price_info
                 else:
                     # Card ID recognized but not in database
+                    price_info = None
+                    # Try to get price if we have a name from somewhere else (unlikely here but for safety)
+                    
                     card_info = {
                         'name': f'Card ID: {card_id_str}',
                         'confidence': confidence,
@@ -369,6 +430,11 @@ def search():
         if isinstance(v, float) and math.isnan(v):
             v = None
         cleaned_result[k] = v
+    
+    # Add price info
+    price_info = get_card_price(cleaned_result['name'])
+    if price_info:
+        cleaned_result['prices'] = price_info
     
     return jsonify(cleaned_result)
 
