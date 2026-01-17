@@ -51,16 +51,6 @@
                 <img src="{{ url_for('static', filename='images/Back-EN.webp') }}" alt="Yu-Gi-Oh!" class="logo-icon">
                 <h1>Yu-Gi-Oh! Card Vision</h1>
             </div>
-            <div class="stats" id="stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="totalCards">0</div>
-                    <div class="stat-label">Total Cards</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="dbStatus">Loading...</div>
-                    <div class="stat-label">Database</div>
-                </div>
-            </div>
         </div>
     </header>
 
@@ -93,7 +83,6 @@
                         <div class="frame-corner frame-bl"></div>
                         <div class="frame-corner frame-br"></div>
                         <div class="frame-instruction">
-                            <div class="instruction-icon">🎴</div>
                             <div class="instruction-text">Đặt thẻ bài vào khung này</div>
                         </div>
                     </div>
@@ -104,13 +93,6 @@
                             <span>LIVE</span>
                         </div>
                     </div>
-                </div>
-
-                <div class="controls">
-                    <button id="captureBtn" class="btn btn-primary btn-full">
-                        <span>📸</span>
-                        <span>Save Current Card</span>
-                    </button>
                 </div>
 
                 <!-- Search Card (moved here) -->

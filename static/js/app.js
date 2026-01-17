@@ -5,7 +5,6 @@
 class CardRecognitionApp {
     constructor() {
         this.videoFeed = document.getElementById('videoFeed');
-        this.captureBtn = document.getElementById('captureBtn');
         this.searchInput = document.getElementById('searchInput');
         this.searchBtn = document.getElementById('searchBtn');
         this.cardInfoContainer = document.getElementById('cardInfo');
@@ -29,14 +28,12 @@ class CardRecognitionApp {
         this.videoFeed.src = '/video_feed';
 
         // Event listeners
-        this.captureBtn.addEventListener('click', () => this.captureCard());
         this.searchBtn.addEventListener('click', () => this.searchCard());
         this.searchInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.searchCard();
         });
 
-        // Load stats
-        this.loadStats();
+
 
         // Create animated background
         this.createParticles();
@@ -47,7 +44,7 @@ class CardRecognitionApp {
         // Start real-time card detection
         this.startRealtimeDetection();
 
-        console.log('✅ App initialized - Persistent mode active');
+        console.log('App initialized - Persistent mode active');
     }
 
     startRealtimeDetection() {
@@ -76,7 +73,7 @@ class CardRecognitionApp {
                     (cardName === this.currentCard && confidence > this.currentConfidence); // Same card, better confidence
 
                 if (shouldUpdate) {
-                    console.log(`✅ UPDATE: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
+                    console.log(`UPDATE: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
                     this.currentCard = cardName;
                     this.currentConfidence = confidence;
 
@@ -102,7 +99,7 @@ class CardRecognitionApp {
                 }
             }
         } catch (error) {
-            console.error('❌ Error:', error);
+            console.error('Error:', error);
             // Keep showing current card even on error
             if (this.currentCard) {
                 this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
@@ -127,7 +124,7 @@ class CardRecognitionApp {
             indicator.classList.add('detected');
             const displayName = cardName.substring(0, 25);
             const confidencePercent = (confidence * 100).toFixed(1);
-            text.textContent = `${displayName}${cardName.length > 25 ? '...' : ''} (${confidencePercent}%) 📌`;
+            text.textContent = `${displayName}${cardName.length > 25 ? '...' : ''} (${confidencePercent}%)`;
         } else if (status === 'waiting') {
             text.textContent = 'Waiting for card...';
         } else if (status === 'error') {
@@ -202,7 +199,7 @@ class CardRecognitionApp {
             </div>
         `;
 
-        console.log('✅ Card displayed successfully');
+        console.log('Card displayed successfully');
     }
 
     clearDetectedCard() {
@@ -254,7 +251,7 @@ class CardRecognitionApp {
                     }
                 });
 
-                console.log('✅ Loaded', data.images.length, 'falling card images');
+                console.log('Loaded', data.images.length, 'falling card images');
             }
         } catch (error) {
             console.error('Failed to load falling card images:', error);
@@ -262,42 +259,7 @@ class CardRecognitionApp {
         }
     }
 
-    async loadStats() {
-        try {
-            const response = await fetch('/stats');
-            const data = await response.json();
 
-            document.getElementById('totalCards').textContent =
-                data.total_cards.toLocaleString();
-            document.getElementById('dbStatus').textContent =
-                data.database_loaded ? 'Loaded' : 'Not Loaded';
-        } catch (error) {
-            console.error('Failed to load stats:', error);
-        }
-    }
-
-    async captureCard() {
-        this.showAlert('Saving current card...', 'info');
-        this.captureBtn.disabled = true;
-
-        try {
-            const response = await fetch('/capture', {
-                method: 'POST'
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                this.showAlert(data.message, 'success');
-            } else {
-                this.showAlert(data.error || 'Failed to save card', 'error');
-            }
-        } catch (error) {
-            this.showAlert('Error: ' + error.message, 'error');
-        } finally {
-            this.captureBtn.disabled = false;
-        }
-    }
 
     async searchCard() {
         const query = this.searchInput.value.trim();
@@ -402,6 +364,6 @@ class CardRecognitionApp {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 Starting Yu-Gi-Oh! Card Recognition App...');
+    console.log('Starting Yu-Gi-Oh! Card Recognition App...');
     new CardRecognitionApp();
 });

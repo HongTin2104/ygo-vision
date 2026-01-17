@@ -11,6 +11,9 @@ from card_detector import CardDetector, CardDatabase, CardRecognizer
 from card_recognizer_cnn import CNNCardRecognizer
 import json
 from datetime import datetime
+import atexit
+import gc
+import time
 
 app = Flask(__name__)
 CORS(app)
@@ -32,17 +35,68 @@ except Exception as e:
     print(f"✗ CNN Card Recognizer failed to initialize: {e}")
     cnn_recognizer = None
 
-# Global camera
+# Global camera and lock
 camera = None
+camera_lock = None
+
+def get_camera_lock():
+    """Get or initialize camera lock"""
+    global camera_lock
+    if camera_lock is None:
+        import threading
+        camera_lock = threading.Lock()
+    return camera_lock
+
+def cleanup_resources():
+    """Clean up camera and other resources"""
+    global camera, cnn_recognizer, camera_lock
+    print("\n🧹 Cleaning up resources...")
+    
+    lock = get_camera_lock()
+    with lock:
+        if camera is not None:
+            try:
+                camera.release()
+                print("✓ Camera released")
+            except Exception as e:
+                print(f"✗ Error releasing camera: {e}")
+            finally:
+                camera = None
+    
+    # Clean up CNN model
+    if cnn_recognizer is not None:
+        try:
+            cnn_recognizer.cleanup()
+        except Exception as e:
+            print(f"✗ Error cleaning up CNN model: {e}")
+    
+    # Force garbage collection to clean up any lingering objects
+    gc.collect()
+    print("✓ Garbage collection completed")
+    print("👋 Shutdown complete!")
+
+
+# Register cleanup handler
+# Note: Flask debug mode handles Ctrl+C internally, atexit will be called on normal shutdown
+atexit.register(cleanup_resources)
 
 def get_camera():
-    """Get or initialize camera"""
+    """Get or initialize camera with thread safety"""
     global camera
-    if camera is None:
-        camera = cv2.VideoCapture(0)
-        camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    return camera
+    lock = get_camera_lock()
+    
+    with lock:
+        if camera is None or not camera.isOpened():
+            if camera is not None:
+                try:
+                    camera.release()
+                except:
+                    pass
+            camera = cv2.VideoCapture(0)
+            camera.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+            camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+            camera.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Reduce buffer to prevent lag
+        return camera
 
 def generate_frames():
     """Generate video frames for streaming with real-time card detection"""
@@ -138,8 +192,6 @@ def generate_frames():
         cv2.putText(display_frame, f"FPS: 30", (display_frame.shape[1] - 120, 30), 
                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (100, 100, 100), 1)
         
-        # NOW flip display frame for viewing (mirror effect for user)
-        display_frame = cv2.flip(display_frame, 1)
         
         # Encode frame
         ret, buffer = cv2.imencode('.jpg', display_frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
@@ -159,136 +211,126 @@ def video_feed():
     return Response(generate_frames(),
                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
+# Cache for current_card to prevent excessive processing
+last_card_result = None
+last_card_time = 0
+CARD_CACHE_DURATION = 0.1  # Cache for 100ms
+
 @app.route('/current_card', methods=['GET'])
 def current_card():
     """Get currently detected card info in real-time"""
-    cam = get_camera()
-    success, frame = cam.read()
+    global last_card_result, last_card_time
     
-    if not success:
-        return jsonify({'detected': False, 'error': 'Failed to capture frame'}), 500
-    
-    # Don't flip - keep card content readable
-    # Detect card
-    contour = detector.find_card_contour(frame)
-    
-    if contour is None:
-        return jsonify({'detected': False})
-    
-    # Extract card
-    card_image = detector.extract_card(frame, contour)
-    
-    if card_image is None:
-        return jsonify({'detected': False})
-    
-    # Convert to base64 for response
-    _, buffer = cv2.imencode('.jpg', card_image)
-    img_base64 = base64.b64encode(buffer).decode('utf-8')
-    
-    # Recognize card using CNN
-    card_name = 'Unknown Card'
-    confidence = 0.0
-    card_info = None
-    
-    if cnn_recognizer is not None:
-        try:
-            card_id_str, confidence = cnn_recognizer.get_best_match(card_image)
-            
-            # Convert card ID string to integer
+    try:
+        # Return cached result if recent enough (rate limiting)
+        current_time = time.time()
+        if last_card_result is not None and (current_time - last_card_time) < CARD_CACHE_DURATION:
+            return jsonify(last_card_result)
+        
+        cam = get_camera()
+        if cam is None or not cam.isOpened():
+            return jsonify({'detected': False, 'error': 'Camera not available'}), 500
+        
+        success, frame = cam.read()
+        
+        if not success or frame is None:
+            return jsonify({'detected': False, 'error': 'Failed to capture frame'}), 500
+        
+        # Don't flip - keep card content readable
+        # Detect card
+        contour = detector.find_card_contour(frame)
+        
+        if contour is None:
+            return jsonify({'detected': False})
+        
+        # Extract card
+        card_image = detector.extract_card(frame, contour)
+        
+        if card_image is None:
+            return jsonify({'detected': False})
+        
+        # Convert to base64 for response
+        _, buffer = cv2.imencode('.jpg', card_image)
+        img_base64 = base64.b64encode(buffer).decode('utf-8')
+        
+        # Recognize card using CNN
+        card_name = 'Unknown Card'
+        confidence = 0.0
+        card_info = None
+        
+        if cnn_recognizer is not None:
             try:
-                card_id = int(card_id_str)
-            except ValueError:
-                card_id = None
-            
-            # Get full card info from database using ID
-            if card_id:
-                card_info = database.get_card_info(card_id)
-            
-            if card_info:
-                # Convert numpy types to native Python types for JSON
-                # Also convert NaN to None (null in JSON)
-                import math
-                cleaned_info = {}
-                for k, v in card_info.items():
-                    # Convert numpy types
-                    if hasattr(v, 'item'):
-                        v = v.item()
-                    # Convert NaN to None
-                    if isinstance(v, float) and math.isnan(v):
-                        v = None
-                    cleaned_info[k] = v
+                card_id_str, confidence = cnn_recognizer.get_best_match(card_image)
                 
-                card_info = cleaned_info
-                card_info['confidence'] = confidence
-            else:
-                # Card ID recognized but not in database
+                # Convert card ID string to integer
+                try:
+                    card_id = int(card_id_str)
+                except ValueError:
+                    card_id = None
+                
+                # Get full card info from database using ID
+                if card_id:
+                    card_info = database.get_card_info(card_id)
+                
+                if card_info:
+                    # Convert numpy types to native Python types for JSON
+                    # Also convert NaN to None (null in JSON)
+                    import math
+                    cleaned_info = {}
+                    for k, v in card_info.items():
+                        # Convert numpy types
+                        if hasattr(v, 'item'):
+                            v = v.item()
+                        # Convert NaN to None
+                        if isinstance(v, float) and math.isnan(v):
+                            v = None
+                        cleaned_info[k] = v
+                    
+                    card_info = cleaned_info
+                    card_info['confidence'] = confidence
+                else:
+                    # Card ID recognized but not in database
+                    card_info = {
+                        'name': f'Card ID: {card_id_str}',
+                        'confidence': confidence,
+                        'type': 'Unknown',
+                        'desc': 'Card information not available in database'
+                    }
+            except Exception as e:
+                print(f"Error recognizing card: {e}")
+                import traceback
+                traceback.print_exc()
                 card_info = {
-                    'name': f'Card ID: {card_id_str}',
-                    'confidence': confidence,
-                    'type': 'Unknown',
-                    'desc': 'Card information not available in database'
+                    'name': 'Recognition Error',
+                    'confidence': 0.0,
+                    'desc': str(e)
                 }
-        except Exception as e:
-            print(f"Error recognizing card: {e}")
-            import traceback
-            traceback.print_exc()
+        else:
             card_info = {
-                'name': 'Recognition Error',
+                'name': 'CNN Model Not Loaded',
                 'confidence': 0.0,
-                'desc': str(e)
+                'desc': 'Please check server logs'
             }
-    else:
-        card_info = {
-            'name': 'CNN Model Not Loaded',
-            'confidence': 0.0,
-            'desc': 'Please check server logs'
+        
+        # Cache the result
+        result = {
+            'detected': True,
+            'image': img_base64,
+            'card_info': card_info
         }
+        last_card_result = result
+        last_card_time = current_time
+        
+        return jsonify(result)
     
-    return jsonify({
-        'detected': True,
-        'image': img_base64,
-        'card_info': card_info
-    })
+    except Exception as e:
+        print(f"Error in current_card: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'detected': False, 'error': str(e)}), 500
 
-@app.route('/capture', methods=['POST'])
-def capture():
-    """Save current detected card"""
-    cam = get_camera()
-    success, frame = cam.read()
-    
-    if not success:
-        return jsonify({'error': 'Failed to capture frame'}), 500
-    
-    # Don't flip - keep card content readable
-    # Detect card
-    contour = detector.find_card_contour(frame)
-    
-    if contour is None:
-        return jsonify({'error': 'No card detected'}), 404
-    
-    # Extract card
-    card_image = detector.extract_card(frame, contour)
-    
-    if card_image is None:
-        return jsonify({'error': 'Failed to extract card'}), 500
-    
-    # Save card image
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f'captured_cards/card_{timestamp}.jpg'
-    import os
-    os.makedirs('captured_cards', exist_ok=True)
-    cv2.imwrite(filename, card_image)
-    
-    # Convert to base64 for response
-    _, buffer = cv2.imencode('.jpg', card_image)
-    img_base64 = base64.b64encode(buffer).decode('utf-8')
-    
-    return jsonify({
-        'success': True,
-        'image': img_base64,
-        'filename': filename,
-        'message': 'Card saved successfully!'
-    })
+
 
 @app.route('/search', methods=['GET'])
 def search():
@@ -387,4 +429,5 @@ def card_image(image_id):
 if __name__ == '__main__':
     print("Starting Yu-Gi-Oh! Card Recognition Server...")
     print("Open http://localhost:5000 in your browser")
-    app.run(debug=True, host='0.0.0.0', port=5000, threaded=True)
+    # Disable reloader to prevent semaphore leaks from multiple processes
+    app.run(debug=True, host='0.0.0.0', port=5000, threaded=True, use_reloader=False)
