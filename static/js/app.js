@@ -85,9 +85,12 @@ class CardRecognitionApp {
                 const cardName = data.card_info.name;
                 const confidence = data.card_info.confidence || 0.95;
 
-                // STRICT MODE: Only proceed if confidence is exactly 100% (1.0)
-                if (confidence < 1.0) {
-                    // Treat as waiting/holding if not 100% sure
+                // STRICT MODE: Require very high confidence (effectively 100%)
+                const THRESHOLD = 0.99;
+
+                // Only proceed if confidence is high enough
+                if (confidence < THRESHOLD) {
+                    // Treat as waiting/holding if not sure enough
                     if (this.currentCard) {
                         this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
                     } else {
@@ -99,12 +102,9 @@ class CardRecognitionApp {
                 console.log(`📥 Detected: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
 
                 // PERSISTENT MODE UPDATE LOGIC:
-                // 1. No card currently displayed -> UPDATE
-                // 2. Different card detected -> UPDATE (since we are in strict mode 100%, any new 100% card should replace the old one)
-                // 3. Same card with higher confidence -> UPDATE
                 const shouldUpdate =
                     !this.currentCard || // No card yet
-                    (cardName !== this.currentCard) || // New card detected (even if confidence is same/lower, as long as it passed the 100% threshold check above)
+                    (cardName !== this.currentCard) || // New card detected (must meet >99% threshold)
                     (cardName === this.currentCard && confidence > this.currentConfidence); // Same card, better confidence
 
                 if (shouldUpdate) {
