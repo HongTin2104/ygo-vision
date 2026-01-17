@@ -970,6 +970,9 @@ h6,
 .detection-card {
     border: 2px solid rgba(212, 165, 116, 0.3);
     background: rgba(45, 31, 20, 0.8);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .detection-card.active {
@@ -978,7 +981,10 @@ h6,
 }
 
 .detected-info {
-    min-height: 200px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .no-detection {

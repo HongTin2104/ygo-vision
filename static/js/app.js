@@ -13,7 +13,7 @@ class CardRecognitionApp {
         this.detectionStatus = document.getElementById('detectionStatus');
         this.alertContainer = document.getElementById('alertContainer');
         this.cornerCardImage = document.getElementById('cornerCardImage');
-        this.priceContainer = document.getElementById('priceContainer');
+
 
         this.cardsScanned = 0;
         this.searchCount = 0;
@@ -377,9 +377,6 @@ class CardRecognitionApp {
                     </div>
                 ` : ''}
                 
-                <div class="card-name">${cardInfo.name || 'Unknown Card'}</div>
-                ${cardInfo.type ? `<div class="card-type">${cardInfo.type}</div>` : ''}
-                
                 <div class="confidence-bar">
                     <div class="confidence-label">
                         <span>Confidence</span>
@@ -389,65 +386,11 @@ class CardRecognitionApp {
                         <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
                     </div>
                 </div>
-                
-                ${cardInfo.desc ? `
-                    <div class="card-description">
-                        ${cardInfo.desc.substring(0, 200)}${cardInfo.desc.length > 200 ? '...' : ''}
-                    </div>
-                ` : ''}
-                
-                <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
-                    ${cardInfo.atk !== null && cardInfo.atk !== undefined ? `
-                        <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
-                            <div style="color: var(--text-secondary); font-size: 0.75rem;">ATK</div>
-                            <div style="color: var(--primary-color); font-weight: 700;">${cardInfo.atk}</div>
-                        </div>
-                    ` : ''}
-                    ${cardInfo.def !== null && cardInfo.def !== undefined ? `
-                        <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
-                            <div style="color: var(--text-secondary); font-size: 0.75rem;">DEF</div>
-                            <div style="color: var(--secondary-color); font-weight: 700;">${cardInfo.def}</div>
-                        </div>
-                    ` : ''}
-                    ${cardInfo.level ? `
-                        <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
-                            <div style="color: var(--text-secondary); font-size: 0.75rem;">Level</div>
-                            <div style="color: var(--accent-color); font-weight: 700;">${cardInfo.level}</div>
-                        </div>
-                    ` : ''}
-                    ${cardInfo.attribute ? `
-                        <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
-                            <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Attribute</div>
-                            <img src="static/images/attribute/${cardInfo.attribute}.svg" 
-                                 alt="${cardInfo.attribute}" 
-                                 style="width: 24px; height: 24px; margin: 0 auto; display: block;"
-                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                            <div style="color: var(--success); font-weight: 700; display: none;">${cardInfo.attribute}</div>
-                        </div>
-                    ` : ''}
-                </div>
             </div>
         `;
 
-        // Render Price Info into Separate Container
-        if (cardInfo.prices) {
-            this.priceContainer.innerHTML = `
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <span class="card-icon" style="color: #4caf50;">$</span>
-                        Market Prices
-                    </h2>
-                </div>
-                <div style="padding: 1.5rem;">
-                    ${this.formatPriceDetails(cardInfo.prices)}
-                </div>
-            `;
-            this.priceContainer.style.display = 'block';
-        } else {
-            this.priceContainer.style.display = 'none';
-        }
-
         console.log('Card displayed successfully');
+
     }
 
     formatPriceDetails(priceData, isExpanded = false) {
@@ -532,7 +475,7 @@ class CardRecognitionApp {
             <div class="no-detection">
                 <img src="static/images/Back-EN.webp" 
                      alt="Card Back" 
-                     style="width: 120px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                     style="width: 250px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                 <p>No card detected</p>
                 <small>Place a Yu-Gi-Oh! card in the frame</small>
             </div>
@@ -540,7 +483,7 @@ class CardRecognitionApp {
         // Reset corner card image to back
         this.resetCornerCardImage();
         this.currentCardImageUrl = null;
-        this.priceContainer.style.display = 'none';
+
     }
 
     updateSessionStats() {
