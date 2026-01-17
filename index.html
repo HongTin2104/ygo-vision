@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Yu-Gi-Oh! Card Recognition System - Nhận diện thẻ bài Yu-Gi-Oh! qua camera">
+    <title>Yu-Gi-Oh! Card Recognition System</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg">
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+        <div class="falling-card"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <img src="static/images/Back-EN.webp" alt="Yu-Gi-Oh!" class="logo-icon">
+                <h1>Yu-Gi-Oh! Card Vision</h1>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Alert Container -->
+        <div id="alertContainer"></div>
+
+        <div class="main-grid">
+            <!-- Left Column - Tabbed Interface -->
+            <div>
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="detection">
+                        <span>Detection</span>
+                    </button>
+                    <button class="tab-btn" data-tab="search">
+                        <span>Search</span>
+                    </button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content-container">
+                    <!-- Detection Tab -->
+                    <div class="tab-content active" id="detection-tab">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    Camera
+                                </h2>
+                                <div class="detection-status" id="detectionStatus">
+                                    <span class="status-indicator"></span>
+                                    <span class="status-text">Waiting for card...</span>
+                                </div>
+                            </div>
+
+                            <div class="video-container">
+                                <img id="videoFeed" alt="Camera Feed">
+
+                                <!-- Detection Frame Overlay -->
+                                <div class="detection-frame">
+                                    <div class="frame-corner frame-tl"></div>
+                                    <div class="frame-corner frame-tr"></div>
+                                    <div class="frame-corner frame-bl"></div>
+                                    <div class="frame-corner frame-br"></div>
+                                    <div class="frame-instruction">
+                                        <div class="instruction-text">Đặt thẻ bài vào khung này</div>
+                                    </div>
+                                </div>
+
+                                <div class="video-overlay">
+                                    <div class="video-status">
+                                        <span class="status-dot"></span>
+                                        <span>LIVE</span>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Right Card Overlay -->
+                                <div class="corner-card-overlay">
+                                    <img id="cornerCardImage" src="static/images/Back-EN.webp" alt="Yu-Gi-Oh Card">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Info Card (Separate Group) -->
+
+                    </div>
+
+                    <!-- Search Tab -->
+                    <div class="tab-content" id="search-tab">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    Search Card
+                                </h2>
+                            </div>
+
+                            <div class="search-container">
+                                <input type="text" id="searchInput" class="search-input"
+                                    placeholder="Enter card name..." autocomplete="off">
+                            </div>
+
+                            <button id="searchBtn" class="btn btn-secondary btn-full">
+                                <span>Search</span>
+                            </button>
+
+                            <!-- Card Details -->
+                            <div
+                                style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(212, 165, 116, 0.2);">
+                                <h3
+                                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>Card Details</span>
+                                </h3>
+
+                                <div id="cardInfo">
+                                    <div class="no-info">
+                                        <p>Search for a card to view details</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Card Info -->
+            <div>
+                <!-- Real-time Detection Info -->
+                <div class="card detection-card" id="detectionCard">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            Detected Card
+                        </h2>
+                    </div>
+
+                    <div id="detectedCardInfo" class="detected-info">
+                        <div class="no-detection">
+                            <img src="static/images/Back-EN.webp" alt="Card Back"
+                                style="width: 250px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+                            <p>No card detected</p>
+                            <small>Place a Yu-Gi-Oh! card in the frame</small>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="footer-info">
+            <p>Built with ❤️ by Nguyen Tin, a passionate Yu-Gi-Oh! fan</p>
+        </div>
+    </div>
+
+    <!-- Reference to modal (will be controlled by JS) -->
+    <div id="cardModal" class="card-modal">
+        <span class="close-modal">&times;</span>
+        <div class="modal-content-grid">
+            <div class="modal-image-col">
+                <img id="modalCardImage" src="" alt="Zoomed Card">
+            </div>
+            <div class="modal-info-col">
+                <div id="modalStatsContent" class="modal-stats-content" style="margin-bottom: 1.5rem;">
+                    <!-- Stats content will be injected here -->
+                </div>
+                <div id="modalPriceContent" class="modal-price-content">
+                    <!-- Price content will be injected here -->
+                </div>
+            </div>
+            <div class="modal-desc-col">
+                <div id="modalDescContent" class="modal-desc-content">
+                    <!-- Description content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="static/js/app.js"></script>
+</body>
+
+</html>

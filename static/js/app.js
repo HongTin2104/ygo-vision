@@ -28,8 +28,20 @@ class CardRecognitionApp {
     }
 
     init() {
+        // Detect environment and set API base URL
+        // If running strictly locally ON PORT 5000 (Flask default), use relative paths (monolithic mode)
+        // If running on other local ports (e.g. via live server) OR on Vercel, use the Hugging Face backend
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isFlaskPort = window.location.port === '5000';
+
+        // Use remote backend if not on Flask port, even if local
+        this.API_BASE_URL = (isLocal && isFlaskPort) ? '' : 'https://hongtin2104-ygo-vision-api.hf.space';
+
+        console.log('Environment:', (isLocal && isFlaskPort) ? 'Local Flask' : 'Remote/Static');
+        console.log('API Base URL:', this.API_BASE_URL || '(Relative to Origin)');
+
         // Set video feed source
-        this.videoFeed.src = 'video_feed';
+        this.videoFeed.src = `${this.API_BASE_URL}/video_feed`;
 
         // Event listeners
         this.searchBtn.addEventListener('click', () => this.searchCard());
@@ -243,7 +255,7 @@ class CardRecognitionApp {
                 ${cardInfo.attribute ? `
                     <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
                         <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Attribute</div>
-                        <img src="static/images/attribute/${cardInfo.attribute}.svg" 
+                        <img src="${this.API_BASE_URL}/static/images/attribute/${cardInfo.attribute}.svg" 
                              alt="${cardInfo.attribute}" 
                              style="width: 24px; height: 24px; margin: 0 auto; display: block;"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -255,25 +267,55 @@ class CardRecognitionApp {
     }
 
     startRealtimeDetection() {
+        // If we are in remote mode (connecting to Hugging Face backend),
+        // we CANNOT use real-time detection yet because the backend camera is not our camera.
+        // We should disable polling to prevent 404/500 errors loop.
+        const isRemote = this.API_BASE_URL.includes('hf.space');
+
+        if (isRemote) {
+            console.log('Remote mode detection: Real-time detection disabled (Server camera not accessible).');
+            this.updateDetectionStatus('waiting');
+            // Update UI to explain limitation
+            const videoContainer = document.querySelector('.video-container');
+            if (videoContainer) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:10;text-align:center;padding:1rem;';
+                overlay.innerHTML = `
+                    <h3 style="color:#feb472;margin-bottom:10px;">Remote Mode</h3>
+                    <p style="color:white;max-width:300px;">Real-time detection is currently only available when running locally.</p>
+                    <p style="color:#ccc;font-size:0.9em;margin-top:10px;">(Please use "Search" tab)</p>
+                `;
+                videoContainer.appendChild(overlay);
+            }
+            return;
+        }
+
         // FASTER POLLING: 200ms for quick detection
-        setInterval(() => this.checkForCard(), 200);
+        this.pollInterval = setInterval(() => this.checkForCard(), 200);
     }
 
     async checkForCard() {
         try {
-            const response = await fetch('current_card');
+            const response = await fetch(`${this.API_BASE_URL}/current_card`);
+
+            // Check content type
+            const contentType = response.headers.get("content-type");
+            if (!response.ok || !contentType || !contentType.includes("application/json")) {
+                // Silently fail for non-JSON response (e.g. 404 from static host)
+                return;
+            }
+
             const data = await response.json();
 
             if (data.detected && data.card_info && data.card_info.name) {
                 const cardName = data.card_info.name;
                 const confidence = data.card_info.confidence || 0.95;
 
-                // STRICT MODE: Require very high confidence (effectively 100%)
+                // STRICT MODE: Require very high confidence
                 const THRESHOLD = 0.99;
 
                 // Only proceed if confidence is high enough
                 if (confidence < THRESHOLD) {
-                    // Treat as waiting/holding if not sure enough
                     if (this.currentCard) {
                         this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
                     } else {
@@ -286,9 +328,9 @@ class CardRecognitionApp {
 
                 // PERSISTENT MODE UPDATE LOGIC:
                 const shouldUpdate =
-                    !this.currentCard || // No card yet
-                    (cardName !== this.currentCard) || // New card detected (must meet >99% threshold)
-                    (cardName === this.currentCard && confidence > this.currentConfidence); // Same card, better confidence
+                    !this.currentCard ||
+                    (cardName !== this.currentCard) ||
+                    (cardName === this.currentCard && confidence > this.currentConfidence);
 
                 if (shouldUpdate) {
                     console.log(`UPDATE: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
@@ -298,18 +340,15 @@ class CardRecognitionApp {
                     this.updateDetectionStatus('detected', cardName, confidence);
                     this.displayDetectedCard(data.card_info);
 
-                    // Update counter if it's a truly new card
                     const isNewCard = this.currentCard !== cardName;
                     if (isNewCard) {
                         this.cardsScanned++;
                         this.updateSessionStats();
                     }
                 } else {
-                    console.log(`KEEP: ${this.currentCard} (${(this.currentConfidence * 100).toFixed(1)}%) - New: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
                     this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
                 }
             } else {
-                // No detection - but KEEP showing current card
                 if (this.currentCard) {
                     this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
                 } else {
@@ -317,7 +356,7 @@ class CardRecognitionApp {
                 }
             }
         } catch (error) {
-            console.error('Error:', error);
+            // console.error('Error:', error);
             // Keep showing current card even on error
             if (this.currentCard) {
                 this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
@@ -366,8 +405,8 @@ class CardRecognitionApp {
         }
 
         this.detectedCardInfo.innerHTML = `
-            <div class="card-display">
-                ${cardInfo.image_url ? `
+    < div class="card-display" >
+        ${cardInfo.image_url ? `
                     <div style="margin-bottom: 1rem; text-align: center;">
                         <img src="${cardInfo.image_url}" 
                              alt="${cardInfo.name}" 
@@ -375,19 +414,20 @@ class CardRecognitionApp {
                              style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"
                              onerror="this.style.display='none'">
                     </div>
-                ` : ''}
-                
-                <div class="confidence-bar">
-                    <div class="confidence-label">
-                        <span>Confidence</span>
-                        <span>${confidencePercent}%</span>
-                    </div>
-                    <div class="confidence-progress">
-                        <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
-                    </div>
-                </div>
-            </div>
-        `;
+                ` : ''
+            }
+
+<div class="confidence-bar">
+    <div class="confidence-label">
+        <span>Confidence</span>
+        <span>${confidencePercent}%</span>
+    </div>
+    <div class="confidence-progress">
+        <div class="confidence-fill" style="width: ${confidencePercent}%"></div>
+    </div>
+</div>
+            </div >
+    `;
 
         console.log('Card displayed successfully');
 
@@ -408,7 +448,7 @@ class CardRecognitionApp {
         let setsHtml = '';
         if (sortedSets.length > 0) {
             setsHtml = `
-                <div style="margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;">
+    < div style = "margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.5rem;" >
                     <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
                         <span>Versions & Printings</span>
                         <span style="font-size: 0.7rem; opacity: 0.7;">${sortedSets.length} found</span>
@@ -433,12 +473,12 @@ class CardRecognitionApp {
                         `;
             }).join('')}
                     </div>
-                </div>
-            `;
+                </div >
+    `;
         }
 
         return `
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+    < div style = "margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);" >
                 <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.5rem;">Average Market Price</div>
                 <div style="display: flex; justify-content: space-between; gap: 0.5rem;">
                     <div style="flex: 1; padding: 0.5rem; background: rgba(0, 200, 83, 0.1); border: 1px solid rgba(0, 200, 83, 0.3); border-radius: 0.5rem; text-align: center;">
@@ -451,8 +491,8 @@ class CardRecognitionApp {
                     </div>
                 </div>
                 ${setsHtml}
-            </div>
-        `;
+            </div >
+    `;
     }
 
     updateCornerCardImage(imageUrl) {
@@ -464,7 +504,7 @@ class CardRecognitionApp {
 
     resetCornerCardImage() {
         if (this.cornerCardImage) {
-            this.cornerCardImage.src = 'static/images/Back-EN.webp';
+            this.cornerCardImage.src = `${this.API_BASE_URL} /static/images / Back - EN.webp`;
             console.log('Reset corner card to back image');
         }
     }
@@ -472,14 +512,14 @@ class CardRecognitionApp {
     clearDetectedCard() {
         this.detectionCard.classList.remove('active');
         this.detectedCardInfo.innerHTML = `
-            <div class="no-detection">
-                <img src="static/images/Back-EN.webp" 
-                     alt="Card Back" 
-                     style="width: 250px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-                <p>No card detected</p>
-                <small>Place a Yu-Gi-Oh! card in the frame</small>
-            </div>
-        `;
+    < div class="no-detection" >
+        <img src="${this.API_BASE_URL}/static/images/Back-EN.webp"
+            alt="Card Back"
+            style="width: 250px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <p>No card detected</p>
+            <small>Place a Yu-Gi-Oh! card in the frame</small>
+        </div>
+`;
         // Reset corner card image to back
         this.resetCornerCardImage();
         this.currentCardImageUrl = null;
@@ -509,7 +549,14 @@ class CardRecognitionApp {
     async loadFallingCardImages() {
         try {
             // Fetch random card images from API
-            const response = await fetch('random_card_images?count=20');
+            const response = await fetch(`${this.API_BASE_URL}/random_card_images?count=20`);
+
+            // Check if response is OK and is JSON
+            const contentType = response.headers.get("content-type");
+            if (!response.ok || !contentType || !contentType.includes("application/json")) {
+                throw new Error(`Invalid response: ${response.status} ${response.statusText}`);
+            }
+
             const data = await response.json();
 
             if (data.images && data.images.length > 0) {
@@ -520,7 +567,7 @@ class CardRecognitionApp {
                 fallingCards.forEach((card, index) => {
                     if (index < data.images.length) {
                         const imageId = data.images[index];
-                        card.style.backgroundImage = `url('card_image/${imageId}')`;
+                        card.style.backgroundImage = `url('${this.API_BASE_URL}/card_image/${imageId}')`;
                     }
                 });
 
@@ -528,11 +575,9 @@ class CardRecognitionApp {
             }
         } catch (error) {
             console.error('Failed to load falling card images:', error);
-            // Fallback to default background if API fails
+            // Fallback to default background is handled by CSS
         }
     }
-
-
 
     async searchCard() {
         const query = this.searchInput.value.trim();
@@ -547,7 +592,7 @@ class CardRecognitionApp {
         this.updateSessionStats();
 
         try {
-            const response = await fetch(`search?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`${this.API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
             const data = await response.json();
 
             if (response.ok) {
