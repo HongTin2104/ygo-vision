@@ -22,6 +22,7 @@ class CardRecognitionApp {
         this.currentCard = null; // Currently displayed card name
         this.currentConfidence = 0; // Current card's confidence
         this.currentCardImageUrl = null; // Current card's image URL
+        this.currentCardDetails = null;
 
         this.init();
     }
@@ -46,6 +47,7 @@ class CardRecognitionApp {
         this.loadFallingCardImages();
 
         // Start real-time card detection
+        this.initModal();
         this.startRealtimeDetection();
 
         console.log('App initialized - Persistent mode active');
@@ -70,6 +72,186 @@ class CardRecognitionApp {
                 console.log(`Switched to ${targetTab} tab`);
             });
         });
+    }
+
+    initModal() {
+        this.cardModal = document.getElementById('cardModal');
+        this.modalImage = document.getElementById('modalCardImage');
+        this.modalPriceContent = document.getElementById('modalPriceContent');
+        this.modalStatsContent = document.getElementById('modalStatsContent');
+        this.modalDescContent = document.getElementById('modalDescContent');
+        this.closeModalBtn = document.querySelector('.close-modal');
+
+        if (!this.cardModal || !this.modalImage || !this.closeModalBtn || !this.modalPriceContent || !this.modalStatsContent || !this.modalDescContent) return;
+
+        // Close events
+        this.closeModalBtn.addEventListener('click', () => this.closeModal());
+        this.cardModal.addEventListener('click', (e) => {
+            if (e.target === this.cardModal || e.target.classList.contains('modal-content-grid')) {
+                this.closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.cardModal.style.display === 'flex') {
+                this.closeModal();
+            }
+        });
+
+        this.detectedCardInfo.addEventListener('click', (e) => {
+            if (e.target.classList.contains('clickable-card')) {
+                // Use stored card details
+                this.openModal(e.target.src, this.currentCardDetails);
+            }
+        });
+
+        // 3D Tilt Effect
+        this.modalImage.addEventListener('mousemove', (e) => this.handleCardTilt(e));
+        this.modalImage.addEventListener('mouseleave', () => this.resetCardTilt());
+    }
+
+    openModal(imageUrl, cardData) {
+        if (!imageUrl) return;
+
+        this.modalImage.src = imageUrl;
+        this.cardModal.style.display = 'flex';
+
+        // Populate Stats Info
+        const hasStats = cardData && (
+            (cardData.atk !== null && cardData.atk !== undefined) ||
+            (cardData.def !== null && cardData.def !== undefined) ||
+            cardData.level ||
+            cardData.attribute
+        );
+
+        if (hasStats) {
+            this.modalStatsContent.innerHTML = `
+                <h2>Card Stats</h2>
+                ${this.generateStatsHtml(cardData)}
+             `;
+            this.modalStatsContent.style.display = 'block';
+        } else {
+            this.modalStatsContent.style.display = 'none';
+        }
+
+        // Populate Price Info
+        if (cardData && cardData.prices) {
+            this.modalPriceContent.innerHTML = `
+                <h2>Market Prices</h2>
+                ${this.formatPriceDetails(cardData.prices, !hasStats)}
+            `;
+        } else {
+            this.modalPriceContent.innerHTML = `
+                <h2>Card Info</h2>
+                <p style="color: var(--text-secondary);">No price information available for this card.</p>
+            `;
+        }
+
+        // Populate Description Info
+        if (cardData) {
+            this.modalDescContent.innerHTML = `
+                <h2>Card Lore</h2>
+                <div class="modal-card-name">${cardData.name || 'Unknown Name'}</div>
+                ${cardData.type ? `<div class="modal-card-type">[ ${cardData.type} ]</div>` : ''}
+                <div class="modal-card-desc-text">
+                    ${cardData.desc ? cardData.desc.replace(/\n/g, '<br>') : 'No description available.'}
+                </div>
+            `;
+            this.modalDescContent.parentNode.style.display = 'block';
+        } else {
+            this.modalDescContent.parentNode.style.display = 'none';
+        }
+
+        // Add Active class for info animation after short delay
+        setTimeout(() => {
+            this.cardModal.classList.add('active');
+        }, 100);
+
+        // Reset and trigger image animation
+        this.modalImage.classList.remove('fly-in');
+        void this.modalImage.offsetWidth; // Force reflow
+        this.modalImage.classList.add('fly-in');
+
+        // Lock body scroll
+        document.body.classList.add('noscroll');
+    }
+
+    handleCardTilt(e) {
+        const el = this.modalImage;
+        // Stop animation if user interacts
+        if (el.classList.contains('fly-in')) {
+            el.classList.remove('fly-in');
+        }
+
+        const rect = el.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+
+        // Calculate rotation (max 15 degrees)
+        // "Face the mouse" effect
+        const rotateX = ((y - centerY) / centerY) * -15;
+        const rotateY = ((x - centerX) / centerX) * 15;
+
+        // Apply transform with perspective
+        // scale3d(1.05, ...) gives a slight pop when tilting
+        el.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+    }
+
+    resetCardTilt() {
+        this.modalImage.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+    }
+
+    closeModal() {
+        this.cardModal.classList.remove('active');
+        // Delay hiding to allow transitions if we had them, or just hide immediately
+        this.cardModal.style.display = 'none';
+        // Unlock body scroll
+        document.body.classList.remove('noscroll');
+        this.resetCardTilt();
+        setTimeout(() => {
+            this.modalImage.src = '';
+            this.modalImage.classList.remove('fly-in');
+            this.modalPriceContent.innerHTML = ''; // Clear content
+            this.modalStatsContent.innerHTML = '';
+            this.modalDescContent.innerHTML = '';
+        }, 100);
+    }
+
+    generateStatsHtml(cardInfo) {
+        return `
+            <div style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.875rem;">
+                ${cardInfo.atk !== null && cardInfo.atk !== undefined ? `
+                    <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">ATK</div>
+                        <div style="color: var(--primary-color); font-weight: 700;">${cardInfo.atk}</div>
+                    </div>
+                ` : ''}
+                ${cardInfo.def !== null && cardInfo.def !== undefined ? `
+                    <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">DEF</div>
+                        <div style="color: var(--secondary-color); font-weight: 700;">${cardInfo.def}</div>
+                    </div>
+                ` : ''}
+                ${cardInfo.level ? `
+                    <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem;">Level</div>
+                        <div style="color: var(--accent-color); font-weight: 700;">${cardInfo.level}</div>
+                    </div>
+                ` : ''}
+                ${cardInfo.attribute ? `
+                    <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
+                        <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Attribute</div>
+                        <img src="static/images/attribute/${cardInfo.attribute}.svg" 
+                             alt="${cardInfo.attribute}" 
+                             style="width: 24px; height: 24px; margin: 0 auto; display: block;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div style="color: var(--success); font-weight: 700; display: none;">${cardInfo.attribute}</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
 
     startRealtimeDetection() {
@@ -170,6 +352,7 @@ class CardRecognitionApp {
 
     displayDetectedCard(cardInfo) {
         console.log('Displaying card:', cardInfo.name);
+        this.currentCardDetails = cardInfo; // Store for modal usage
 
         this.detectionCard.classList.add('active');
 
@@ -188,6 +371,7 @@ class CardRecognitionApp {
                     <div style="margin-bottom: 1rem; text-align: center;">
                         <img src="${cardInfo.image_url}" 
                              alt="${cardInfo.name}" 
+                             class="clickable-card"
                              style="max-width: 100%; height: auto; border-radius: 0.5rem; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"
                              onerror="this.style.display='none'">
                     </div>
@@ -266,7 +450,7 @@ class CardRecognitionApp {
         console.log('Card displayed successfully');
     }
 
-    formatPriceDetails(priceData) {
+    formatPriceDetails(priceData, isExpanded = false) {
         if (!priceData) return '';
 
         // Handle backward compatibility or different structure
@@ -276,6 +460,8 @@ class CardRecognitionApp {
         // Sort sets by price (High to Low)
         const sortedSets = [...sets].sort((a, b) => parseFloat(b.set_price) - parseFloat(a.set_price));
 
+        const listMaxHeight = isExpanded ? '450px' : '200px';
+
         let setsHtml = '';
         if (sortedSets.length > 0) {
             setsHtml = `
@@ -284,7 +470,7 @@ class CardRecognitionApp {
                         <span>Versions & Printings</span>
                         <span style="font-size: 0.7rem; opacity: 0.7;">${sortedSets.length} found</span>
                     </div>
-                    <div style="max-height: 200px; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
+                    <div style="max-height: ${listMaxHeight}; overflow-y: auto; padding-right: 5px;" class="custom-scrollbar">
                         ${sortedSets.map(set => {
                 const price = parseFloat(set.set_price);
                 const priceDisplay = (price > 0) ? `$${set.set_price}` : '<span style="opacity: 0.5; font-size: 0.7rem;">N/A</span>';
@@ -358,8 +544,8 @@ class CardRecognitionApp {
     }
 
     updateSessionStats() {
-        document.getElementById('cardsScanned').textContent = this.cardsScanned;
-        document.getElementById('searchCount').textContent = this.searchCount;
+        document.getElementById('cardsScanned').textContent = this.cardsScanned || 0;
+        document.getElementById('searchCount').textContent = this.searchCount || 0;
     }
 
     createParticles() {

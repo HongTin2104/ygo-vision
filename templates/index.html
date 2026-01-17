@@ -193,6 +193,29 @@
         </div>
     </div>
 
+    <!-- Reference to modal (will be controlled by JS) -->
+    <div id="cardModal" class="card-modal">
+        <span class="close-modal">&times;</span>
+        <div class="modal-content-grid">
+            <div class="modal-image-col">
+                <img id="modalCardImage" src="" alt="Zoomed Card">
+            </div>
+            <div class="modal-info-col">
+                <div id="modalStatsContent" class="modal-stats-content" style="margin-bottom: 1.5rem;">
+                    <!-- Stats content will be injected here -->
+                </div>
+                <div id="modalPriceContent" class="modal-price-content">
+                    <!-- Price content will be injected here -->
+                </div>
+            </div>
+            <div class="modal-desc-col">
+                <div id="modalDescContent" class="modal-desc-content">
+                    <!-- Description content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
