@@ -25,7 +25,8 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Crimson Pro', 'Inter', serif;
+    font-weight: 300;
     background: var(--dark-bg);
     color: var(--text-primary);
     line-height: 1.6;
@@ -304,16 +305,34 @@ header {
     text-align: center;
 }
 
+/* Typography Overrides for Yu-Gi-Oh Style */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.card-title,
+.logo h1,
+.stat-value,
+.tab-btn {
+    font-family: 'Cinzel', serif;
+}
+
 .stat-value {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--primary-color);
+    letter-spacing: 1px;
 }
 
 .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
 }
+
 
 /* Main container */
 .container {
@@ -332,19 +351,28 @@ header {
 
 /* Card styles */
 .card {
-    background: rgba(45, 31, 20, 0.6);
-    backdrop-filter: blur(10px);
-    border-radius: var(--border-radius);
+    /* Double background for gradient border effect */
+    background-image: linear-gradient(rgba(45, 31, 20, 0.9), rgba(45, 31, 20, 0.95)),
+        linear-gradient(135deg, #2b2b2b 0%, #ffffff 50%, #000000 100%);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+    border: 3px solid transparent;
+
+    border-radius: 12px;
     padding: 2rem;
-    box-shadow: var(--shadow-md);
-    border: 1px solid rgba(212, 165, 116, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    /* Ensures inner content respects the border */
 }
 
 .card:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
-    border-color: rgba(212, 165, 116, 0.5);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+    /* Intensify the highlight on hover */
+    background-image: linear-gradient(rgba(45, 31, 20, 0.85), rgba(45, 31, 20, 0.9)),
+        linear-gradient(135deg, #444 0%, #fff 40%, #fff 60%, #000 100%);
 }
 
 .card-header {
@@ -356,7 +384,7 @@ header {
 
 .card-title {
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 400;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -690,12 +718,12 @@ header {
 
 .detail-label {
     color: var(--text-secondary);
-    font-weight: 600;
+    font-weight: 400;
 }
 
 .detail-value {
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 300;
 }
 
 /* Loading spinner */
@@ -1000,8 +1028,10 @@ header {
 }
 
 .card-name {
-    font-size: 1.3rem;
-    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.5px;
+    font-weight: 500;
     color: var(--primary-color);
     margin-bottom: 0.75rem;
     line-height: 1.3;
@@ -1060,7 +1090,8 @@ header {
     padding: 1rem;
     background: rgba(26, 20, 16, 0.4);
     border-radius: 0.5rem;
-    font-size: 0.875rem;
+    font-family: 'Crimson Pro', serif;
+    font-size: 1rem;
     line-height: 1.6;
     color: var(--text-secondary);
     max-height: 150px;

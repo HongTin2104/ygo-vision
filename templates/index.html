@@ -13,7 +13,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Crimson+Pro:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
@@ -65,11 +67,9 @@
                 <!-- Tab Navigation -->
                 <div class="tab-navigation">
                     <button class="tab-btn active" data-tab="detection">
-                        <span class="tab-icon">🎯</span>
                         <span>Detection</span>
                     </button>
                     <button class="tab-btn" data-tab="search">
-                        <span class="tab-icon">🔍</span>
                         <span>Search</span>
                     </button>
                 </div>
@@ -168,7 +168,6 @@
                 <div class="card detection-card" id="detectionCard">
                     <div class="card-header">
                         <h2 class="card-title">
-                            <span class="card-icon">🎯</span>
                             Detected Card
                         </h2>
                     </div>
@@ -187,8 +186,7 @@
 
         <!-- Footer Info -->
         <div class="footer-info">
-            <p>Built with ❤️ for Yu-Gi-Oh! fans</p>
-            <p>Powered by CNN (EfficientNet-B0) • 99.6% Accuracy • 13,269 Cards</p>
+            <p>Built with ❤️ by Nguyen Tin, a passionate Yu-Gi-Oh! fan</p>
         </div>
     </div>
 
