@@ -12,6 +12,7 @@ class CardRecognitionApp {
         this.detectionCard = document.getElementById('detectionCard');
         this.detectionStatus = document.getElementById('detectionStatus');
         this.alertContainer = document.getElementById('alertContainer');
+        this.cornerCardImage = document.getElementById('cornerCardImage');
 
         this.cardsScanned = 0;
         this.searchCount = 0;
@@ -19,13 +20,14 @@ class CardRecognitionApp {
         // PERSISTENT MODE - Keep card until replaced by better one
         this.currentCard = null; // Currently displayed card name
         this.currentConfidence = 0; // Current card's confidence
+        this.currentCardImageUrl = null; // Current card's image URL
 
         this.init();
     }
 
     init() {
         // Set video feed source
-        this.videoFeed.src = '/video_feed';
+        this.videoFeed.src = 'video_feed';
 
         // Event listeners
         this.searchBtn.addEventListener('click', () => this.searchCard());
@@ -33,7 +35,8 @@ class CardRecognitionApp {
             if (e.key === 'Enter') this.searchCard();
         });
 
-
+        // Tab switching
+        this.initTabSwitching();
 
         // Create animated background
         this.createParticles();
@@ -47,6 +50,27 @@ class CardRecognitionApp {
         console.log('App initialized - Persistent mode active');
     }
 
+    initTabSwitching() {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.getAttribute('data-tab');
+
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(`${targetTab}-tab`).classList.add('active');
+
+                console.log(`Switched to ${targetTab} tab`);
+            });
+        });
+    }
+
     startRealtimeDetection() {
         // FASTER POLLING: 200ms for quick detection
         setInterval(() => this.checkForCard(), 200);
@@ -54,22 +78,33 @@ class CardRecognitionApp {
 
     async checkForCard() {
         try {
-            const response = await fetch('/current_card');
+            const response = await fetch('current_card');
             const data = await response.json();
 
             if (data.detected && data.card_info && data.card_info.name) {
                 const cardName = data.card_info.name;
                 const confidence = data.card_info.confidence || 0.95;
 
+                // STRICT MODE: Only proceed if confidence is exactly 100% (1.0)
+                if (confidence < 1.0) {
+                    // Treat as waiting/holding if not 100% sure
+                    if (this.currentCard) {
+                        this.updateDetectionStatus('holding', this.currentCard, this.currentConfidence);
+                    } else {
+                        this.updateDetectionStatus('waiting');
+                    }
+                    return;
+                }
+
                 console.log(`📥 Detected: ${cardName} (${(confidence * 100).toFixed(1)}%)`);
 
-                // PERSISTENT MODE: Only update if:
-                // 1. No card currently displayed, OR
-                // 2. Different card with HIGHER confidence, OR
-                // 3. Same card with HIGHER confidence
+                // PERSISTENT MODE UPDATE LOGIC:
+                // 1. No card currently displayed -> UPDATE
+                // 2. Different card detected -> UPDATE (since we are in strict mode 100%, any new 100% card should replace the old one)
+                // 3. Same card with higher confidence -> UPDATE
                 const shouldUpdate =
                     !this.currentCard || // No card yet
-                    (cardName !== this.currentCard && confidence > this.currentConfidence) || // Different card, better confidence
+                    (cardName !== this.currentCard) || // New card detected (even if confidence is same/lower, as long as it passed the 100% threshold check above)
                     (cardName === this.currentCard && confidence > this.currentConfidence); // Same card, better confidence
 
                 if (shouldUpdate) {
@@ -140,6 +175,12 @@ class CardRecognitionApp {
         const confidence = cardInfo.confidence || 0.95;
         const confidencePercent = (confidence * 100).toFixed(1);
 
+        // Update corner card image
+        if (cardInfo.image_url) {
+            this.currentCardImageUrl = cardInfo.image_url;
+            this.updateCornerCardImage(cardInfo.image_url);
+        }
+
         this.detectedCardInfo.innerHTML = `
             <div class="card-display">
                 ${cardInfo.image_url ? `
@@ -191,8 +232,12 @@ class CardRecognitionApp {
                     ` : ''}
                     ${cardInfo.attribute ? `
                         <div style="padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border-radius: 0.5rem; text-align: center;">
-                            <div style="color: var(--text-secondary); font-size: 0.75rem;">Attribute</div>
-                            <div style="color: var(--success); font-weight: 700;">${cardInfo.attribute}</div>
+                            <div style="color: var(--text-secondary); font-size: 0.75rem; margin-bottom: 0.25rem;">Attribute</div>
+                            <img src="static/images/attribute/${cardInfo.attribute}.svg" 
+                                 alt="${cardInfo.attribute}" 
+                                 style="width: 24px; height: 24px; margin: 0 auto; display: block;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div style="color: var(--success); font-weight: 700; display: none;">${cardInfo.attribute}</div>
                         </div>
                     ` : ''}
                 </div>
@@ -202,15 +247,34 @@ class CardRecognitionApp {
         console.log('Card displayed successfully');
     }
 
+    updateCornerCardImage(imageUrl) {
+        if (this.cornerCardImage && imageUrl) {
+            this.cornerCardImage.src = imageUrl;
+            console.log('🖼️ Updated corner card image:', imageUrl);
+        }
+    }
+
+    resetCornerCardImage() {
+        if (this.cornerCardImage) {
+            this.cornerCardImage.src = 'static/images/Back-EN.webp';
+            console.log('🔄 Reset corner card to back image');
+        }
+    }
+
     clearDetectedCard() {
         this.detectionCard.classList.remove('active');
         this.detectedCardInfo.innerHTML = `
             <div class="no-detection">
-                <div class="no-detection-icon"></div>
+                <img src="static/images/Back-EN.webp" 
+                     alt="Card Back" 
+                     style="width: 120px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                 <p>No card detected</p>
                 <small>Place a Yu-Gi-Oh! card in the frame</small>
             </div>
         `;
+        // Reset corner card image to back
+        this.resetCornerCardImage();
+        this.currentCardImageUrl = null;
     }
 
     updateSessionStats() {
@@ -236,7 +300,7 @@ class CardRecognitionApp {
     async loadFallingCardImages() {
         try {
             // Fetch random card images from API
-            const response = await fetch('/random_card_images?count=20');
+            const response = await fetch('random_card_images?count=20');
             const data = await response.json();
 
             if (data.images && data.images.length > 0) {
@@ -247,7 +311,7 @@ class CardRecognitionApp {
                 fallingCards.forEach((card, index) => {
                     if (index < data.images.length) {
                         const imageId = data.images[index];
-                        card.style.backgroundImage = `url('/card_image/${imageId}')`;
+                        card.style.backgroundImage = `url('card_image/${imageId}')`;
                     }
                 });
 
@@ -274,7 +338,7 @@ class CardRecognitionApp {
         this.updateSessionStats();
 
         try {
-            const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`search?q=${encodeURIComponent(query)}`);
             const data = await response.json();
 
             if (response.ok) {

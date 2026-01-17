@@ -60,73 +60,102 @@
         <div id="alertContainer"></div>
 
         <div class="main-grid">
-            <!-- Left Column - Video Feed -->
-            <div class="card">
-                <div class="card-header">
-                    <h2 class="card-title">
-                        <span class="card-icon">📹</span>
-                        Camera Feed
-                    </h2>
-                    <div class="detection-status" id="detectionStatus">
-                        <span class="status-indicator"></span>
-                        <span class="status-text">Waiting for card...</span>
-                    </div>
-                </div>
-
-                <div class="video-container">
-                    <img id="videoFeed" alt="Camera Feed">
-
-                    <!-- Detection Frame Overlay -->
-                    <div class="detection-frame">
-                        <div class="frame-corner frame-tl"></div>
-                        <div class="frame-corner frame-tr"></div>
-                        <div class="frame-corner frame-bl"></div>
-                        <div class="frame-corner frame-br"></div>
-                        <div class="frame-instruction">
-                            <div class="instruction-text">Đặt thẻ bài vào khung này</div>
-                        </div>
-                    </div>
-
-                    <div class="video-overlay">
-                        <div class="video-status">
-                            <span class="status-dot"></span>
-                            <span>LIVE</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Search Card (moved here) -->
-                <div class="card" style="margin-top: 1.5rem;">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">🔍</span>
-                            Search Card
-                        </h2>
-                    </div>
-
-                    <div class="search-container">
-                        <span class="search-icon">🔎</span>
-                        <input type="text" id="searchInput" class="search-input" placeholder="Enter card name..."
-                            autocomplete="off">
-                    </div>
-
-                    <button id="searchBtn" class="btn btn-secondary btn-full">
+            <!-- Left Column - Tabbed Interface -->
+            <div>
+                <!-- Tab Navigation -->
+                <div class="tab-navigation">
+                    <button class="tab-btn active" data-tab="detection">
+                        <span class="tab-icon">🎯</span>
+                        <span>Detection</span>
+                    </button>
+                    <button class="tab-btn" data-tab="search">
+                        <span class="tab-icon">🔍</span>
                         <span>Search</span>
                     </button>
+                </div>
 
-                    <!-- Card Details (inside same card) -->
-                    <div
-                        style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(139, 92, 246, 0.2);">
-                        <h3
-                            style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
-                            <span>ℹ️</span>
-                            <span>Card Details</span>
-                        </h3>
+                <!-- Tab Content -->
+                <div class="tab-content-container">
+                    <!-- Detection Tab -->
+                    <div class="tab-content active" id="detection-tab">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <span class="card-icon">📹</span>
+                                    Camera Feed
+                                </h2>
+                                <div class="detection-status" id="detectionStatus">
+                                    <span class="status-indicator"></span>
+                                    <span class="status-text">Waiting for card...</span>
+                                </div>
+                            </div>
 
-                        <div id="cardInfo">
-                            <div class="no-info">
-                                <div class="no-info-icon">📋</div>
-                                <p>Search for a card to view details</p>
+                            <div class="video-container">
+                                <img id="videoFeed" alt="Camera Feed">
+
+                                <!-- Detection Frame Overlay -->
+                                <div class="detection-frame">
+                                    <div class="frame-corner frame-tl"></div>
+                                    <div class="frame-corner frame-tr"></div>
+                                    <div class="frame-corner frame-bl"></div>
+                                    <div class="frame-corner frame-br"></div>
+                                    <div class="frame-instruction">
+                                        <div class="instruction-text">Đặt thẻ bài vào khung này</div>
+                                    </div>
+                                </div>
+
+                                <div class="video-overlay">
+                                    <div class="video-status">
+                                        <span class="status-dot"></span>
+                                        <span>LIVE</span>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Right Card Overlay -->
+                                <div class="corner-card-overlay">
+                                    <img id="cornerCardImage"
+                                        src="{{ url_for('static', filename='images/Back-EN.webp') }}"
+                                        alt="Yu-Gi-Oh Card">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Tab -->
+                    <div class="tab-content" id="search-tab">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">
+                                    <span class="card-icon">🔍</span>
+                                    Search Card
+                                </h2>
+                            </div>
+
+                            <div class="search-container">
+                                <span class="search-icon">🔎</span>
+                                <input type="text" id="searchInput" class="search-input"
+                                    placeholder="Enter card name..." autocomplete="off">
+                            </div>
+
+                            <button id="searchBtn" class="btn btn-secondary btn-full">
+                                <span>Search</span>
+                            </button>
+
+                            <!-- Card Details -->
+                            <div
+                                style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid rgba(212, 165, 116, 0.2);">
+                                <h3
+                                    style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: 0.5rem;">
+                                    <span>ℹ️</span>
+                                    <span>Card Details</span>
+                                </h3>
+
+                                <div id="cardInfo">
+                                    <div class="no-info">
+                                        <div class="no-info-icon">📋</div>
+                                        <p>Search for a card to view details</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -146,30 +175,10 @@
 
                     <div id="detectedCardInfo" class="detected-info">
                         <div class="no-detection">
-                            <div class="no-detection-icon"></div>
+                            <img src="{{ url_for('static', filename='images/Back-EN.webp') }}" alt="Card Back"
+                                style="width: 120px; height: auto; margin-bottom: 1rem; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
                             <p>No card detected</p>
                             <small>Place a Yu-Gi-Oh! card in the frame</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Stats -->
-                <div class="card glass" style="margin-top: 1.5rem;">
-                    <div class="card-header">
-                        <h2 class="card-title">
-                            <span class="card-icon">📊</span>
-                            Session Stats
-                        </h2>
-                    </div>
-
-                    <div class="stats-grid">
-                        <div class="stat-box stat-box-primary">
-                            <div class="stat-number" id="cardsScanned">0</div>
-                            <div class="stat-label">Cards Detected</div>
-                        </div>
-                        <div class="stat-box stat-box-secondary">
-                            <div class="stat-number" id="searchCount">0</div>
-                            <div class="stat-label">Searches</div>
                         </div>
                     </div>
                 </div>
